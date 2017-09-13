@@ -53,6 +53,14 @@ class AdminUsersController extends CBController {
 		$query->addSelect('cms_privileges.name as cms_privileges_name');		
 	}
 
+	public function hookBeforeAdd(&$arr) {
+		$arr["password"] = \Hash::make($arr["password"]);
+	}
+
+	public function hookBeforeEdit(&$arr,$id) {
+		$arr["password"] = \Hash::make($arr["password"]);
+	}
+
 	public function getProfile() {			
 
 		$this->button_addmore = FALSE;
