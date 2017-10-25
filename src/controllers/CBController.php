@@ -1611,6 +1611,7 @@ class CBController extends Controller {
 					$a[$colname] = $value->$s;
 				}
 			}
+			Log::error('passedonvalue');
 
 			$has_title_field = true;
 			foreach($a as $k=>$v) {
@@ -1621,6 +1622,7 @@ class CBController extends Controller {
 			}
 
 			if($has_title_field==false) continue;
+			Log::error('titlefieldfalse');
 
 			try{
 
