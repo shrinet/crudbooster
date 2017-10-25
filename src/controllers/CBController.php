@@ -1646,7 +1646,7 @@ class CBController extends Controller {
 				
 			}catch(\Exception $e) {
 				$e = (string) $e;
-				Log::error('err0r:'.$e);
+				//Log::error('err0r:'.$e);
 				Cache::put('error_'.$file_md5,$e,500);
 			}
 		}
