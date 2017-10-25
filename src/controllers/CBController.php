@@ -1527,6 +1527,8 @@ class CBController extends Controller {
 			$total = Session::get('total_data_import');
 			$prog = intval(Cache::get('success_'.$file_md5)) / $total * 100;
 			$prog = round($prog,2);
+			Log::error('prog'.$prog);
+			Log::error('total'.$total);
 			if($prog >= 100) {
 				Cache::forget('success_'.$file_md5);
 			}
@@ -1623,7 +1625,7 @@ class CBController extends Controller {
 
 				if ($vd->fails())
 				{
-					Log::error('Validation failed');
+
 				}
 				else
 				{
@@ -1633,7 +1635,7 @@ class CBController extends Controller {
 				Cache::increment('success_'.$file_md5);
 			}catch(\Exception $e) {
 				$e = (string) $e;
-				Log::error('Error msg: '.$e);
+				
 				Cache::put('error_'.$file_md5,$e,500);
 			}
 		}
