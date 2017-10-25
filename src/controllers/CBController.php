@@ -1528,7 +1528,7 @@ class CBController extends Controller {
 			$total = Session::get('total_data_import');
 			$prog = intval(Cache::get('success_'.$file_md5)) / $total * 100;
 			$prog = round($prog,2);
-			Log::error('prog'.$prog);
+			Log::error('prog'.Cache::get('success_'.$file_md5));
 			Log::error('total'.$total);
 			if($prog >= 100) {
 				Cache::forget('success_'.$file_md5);
@@ -1631,8 +1631,9 @@ class CBController extends Controller {
 				else
 				{
 					DB::table($this->table)->insert($a);
-					Cache::increment('success_'.$file_md5);
+					
 				}
+				Cache::increment('success_'.$file_md5);
 				
 				
 			}catch(\Exception $e) {
