@@ -1525,6 +1525,11 @@ class CBController extends Controller {
 		Log::error('md5'.$file_md5);
 		Log::error('total'.$total);
 
+		if (!Cache::has('success_'.$file_md5))
+		{
+		    Cache::put('success_'.$file_md5,0,60)
+		}
+
 		if(Request::get('file') && Request::get('resume')==1) {
 			$total = Session::get('total_data_import');
 			$prog = intval(Cache::get('success_'.$file_md5)) / $total * 100;
