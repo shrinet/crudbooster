@@ -995,10 +995,6 @@ class CBController extends Controller {
 			}
 		}
 
-		foreach($array_input as $value) {
-			Log::error('validation',$value);
-		}
-
 		
 		$validator = Validator::make($arr,$array_input);
 
