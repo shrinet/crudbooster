@@ -892,7 +892,7 @@ class CBController extends Controller {
 			$ai = array();
 			$name = $di['name'];			
 
-			if( !isset($request_all[$name]) ) continue;
+			if( !isset($arr[$name]) ) continue;
 
 			if($di['type'] != 'upload') {
 				if(@$di['required']) {
@@ -925,7 +925,7 @@ class CBController extends Controller {
 			if(!$name) continue;
 
 			if($di['type']=='money') {
-				$request_all[$name] = preg_replace('/[^\d-]+/', '', $request_all[$name]);
+				$arr[$name] = preg_replace('/[^\d-]+/', '', $arr[$name]);
 			}
 
 
