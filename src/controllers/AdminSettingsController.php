@@ -1,146 +1,148 @@
-<?php namespace crocodicstudio\crudbooster\controllers;
+<?php
 
-use crocodicstudio\crudbooster\controllers\Controller;
-use Illuminate\Support\Facades\Session;
+namespace crocodicstudio\crudbooster\controllers;
+
+use crocodicstudio\crudbooster\controllers\Forms\SettingsForm;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\PDF;
-use Illuminate\Support\Facades\Excel;
 use CRUDBooster;
 
-class AdminSettingsController extends CBController {
+class AdminSettingsController extends CBController
+{
+    public function cbInit()
+    {
+        $this->table = 'cms_settings';
+        $this->title_field = "name";
+        $this->index_orderby = ['name' => 'asc'];
 
-	public function cbInit() {		
-		$this->table         = 'cms_settings';
-		$this->title_field   = "name";		
-		$this->index_orderby = array('name'=>'asc');
-		$this->button_delete = true;
-		$this->button_show   = false;
-		$this->button_cancel = false;
-		$this->button_import = false;
-		$this->button_export = false;
+        $this->setButtons();
 
-		$this->col = array();		
+        $this->col = [];
 
-		$this->form = array();
-		
-		
-		if(Request::get('group_setting')) {
-			$value = Request::get('group_setting');
-		}else{
-			$value = 'General Setting';
-		}
+        $this->form = SettingsForm::makeForm(request('group_setting', 'General Setting'));
+    }
 
-		$this->form[] = array('label'=>'Group','name'=>'group_setting','value'=>$value);
-		$this->form[] = array('label'=>'Label','name'=>'label');
+    function getShow()
+    {
+        $this->cbLoader();
 
-		$this->form[] = array("label"=>"Type","name"=>"content_input_type","type"=>"select_dataenum",'options'=>["enum"=>array("text","number","email","textarea","wysiwyg","upload_image","upload_document","datepicker","radio","select")]);		
-		$this->form[] = array("label"=>"Radio / Select Data","name"=>"dataenum","placeholder"=>"Example : abc,def,ghi","jquery"=>"
-			function show_radio_data() {
-				var cit = $('#content_input_type').val();
-				if(cit == 'radio' || cit == 'select') {
-					$('#form-group-dataenum').show();	
-				}else{
-					$('#form-group-dataenum').hide();
-				}					
-			}
-			$('#content_input_type').change(show_radio_data);
-			show_radio_data();
-			");
-		$this->form[] = array("label"=>"Helper Text","name"=>"helper","type"=>"text");				
-		
-		
-	}
+        $this->allowOnlySuperAdmin();
 
-	function getShow() {
-		$this->cbLoader();
+        $data['page_title'] = urldecode(request('group'));
 
-		if(!CRUDBooster::isSuperadmin()) {
-			CRUDBooster::insertLog(trans("crudbooster.log_try_view",['name'=>'Setting','module'=>'Setting']));
-			CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
-		}
+        return view('crudbooster::setting', $data);
+    }
 
-		$data['page_title'] = urldecode(Request::get('group'));		
-		return view('crudbooster::setting',$data);
-	} 
-	
-	function hook_before_edit(&$posdata,$id) {
-		$this->return_url = CRUDBooster::mainpath("show")."?group=".$posdata['group_setting'];
-	}
+    function hookBeforeEdit(&$posdata, $id)
+    {
+        $this->return_url = CRUDBooster::mainpath("show")."?group=".$posdata['group_setting'];
+    }
 
-	function getDeleteFileSetting() {
-		$id = g('id');
-		$row = CRUDBooster::first('cms_settings',$id);
-		if(Storage::exists($row->content)) Storage::delete($row->content);
-		DB::table('cms_settings')->where('id',$id)->update(['content'=>NULL]);
-		CRUDBooster::redirect(Request::server('HTTP_REFERER'),trans('alert_delete_data_success'),'success');		
-	}	
+    function getDeleteFileSetting()
+    {
+        $id = request('id');
+        $content = CRUDBooster::first($this->table, $id)->content;
 
+        Storage::delete($content);
 
-	function postSaveSetting() {
+        $this->table()->where('id', $id)->update(['content' => null]);
 
-		if(!CRUDBooster::isSuperadmin()) {
-			CRUDBooster::insertLog(trans("crudbooster.log_try_view",['name'=>'Setting','module'=>'Setting']));
-			CRUDBooster::redirect(CRUDBooster::adminPath(),trans('crudbooster.denied_access'));
-		}
-		
-		$group = Request::get('group_setting');
-		$setting = DB::table('cms_settings')->where('group_setting',$group)->get();
-		foreach($setting as $set) {
-			
-			$name = $set->name;
+        CRUDBooster::redirect(Request::server('HTTP_REFERER'), trans('alert_delete_data_success'), 'success');
+    }
 
-			$content = Request::get($set->name);
+    function postSaveSetting()
+    {
+        $this->allowOnlySuperAdmin();
 
-			if (Request::hasFile($name))
-			{			
+        $group = request('group_setting');
 
-				if($set->content_input_type == 'upload_image') {
-					CRUDBooster::valid([ $name => 'image|max:10000' ],'view');
-				}else{
-					CRUDBooster::valid([ $name => 'mimes:doc,docx,xls,xlsx,ppt,pptx,pdf,zip,rar|max:20000' ], 'view');
-				}
+        $settings = $this->table()->where('group_setting', $group)->get();
 
+        foreach ($settings as $setting) {
 
-				$file = Request::file($name);					
-				$ext  = $file->getClientOriginalExtension();
+            $name = $setting->name;
 
-				//Create Directory Monthly 
-				Storage::makeDirectory(date('Y-m'));
+            $content = request($name);
+            if (Request::hasFile($name)) {
+                $content = $this->uploadFile($setting);
+            }
 
-				//Move file to storage
-				$filename = md5(str_random(5)).'.'.$ext;
-				if($file->move(storage_path('app'.DIRECTORY_SEPARATOR.date('Y-m')),$filename)) {						
-					$content = 'uploads/'.date('Y-m').'/'.$filename;
-				}					  
-			}
+            $this->table()->where('name', $name)->update(['content' => $content]);
 
+            Cache::forget('setting_'.$name);
+        }
 
-			DB::table('cms_settings')->where('name',$set->name)->update(['content'=>$content]);
+        return CRUDBooster::backWithMsg('Your setting has been saved !');
+    }
 
-			Cache::forget('setting_'.$set->name);
-		}
-		return redirect()->back()->with(['message'=>'Your setting has been saved !','message_type'=>'success']);
-	}
+    function hookBeforeAdd(&$arr)
+    {
+        $arr['name'] = str_slug($arr['label'], '_');
+        $this->return_url = CRUDBooster::mainpath("show")."?group=".$arr['group_setting'];
+    }
 
-	function hook_before_add(&$arr) {
-		$arr['name'] = str_slug($arr['label'],'_');
-		$this->return_url = CRUDBooster::mainpath("show")."?group=".$arr['group_setting'];
-	}
+    function hookAfterEdit($id)
+    {
+        $row = $this->table()->where($this->primary_key, $id)->first();
 
-	function hook_after_edit($id) {
-		$row = DB::table($this->table)->where($this->primary_key,$id)->first();
+        /* REMOVE CACHE */
+        Cache::forget('setting_'.$row->name);
+    }
 
-		/* REMOVE CACHE */
-		Cache::forget('setting_'.$row->name);
-	}
-	
+    /**
+     * @param $name
+     * @param $set
+     */
+    private function validateFileType($set)
+    {
+        $name = $set->name;
+        $rules = [$name => 'image|max:10000'];
 
+        if ($set->content_input_type !== 'upload_image') {
+            $rules = [$name => 'mimes:doc,docx,xls,xlsx,ppt,pptx,pdf,zip,rar|max:20000'];
+        }
+
+        CRUDBooster::valid($rules, 'view');
+    }
+
+    private function allowOnlySuperAdmin()
+    {
+        if (! CRUDBooster::isSuperadmin()) {
+            CRUDBooster::insertLog(trans("crudbooster.log_try_view", ['name' => 'Setting', 'module' => 'Setting']));
+            CRUDBooster::denyAccess();
+        }
+    }
+
+    /**
+     * @param $set
+     * @param $name
+     * @return string
+     */
+    private function uploadFile($set)
+    {
+        $this->validateFileType($set);
+        $month = date('Y-m');
+
+        $file = Request::file($set->name);
+        //Create Directory Monthly
+        Storage::makeDirectory($month);
+
+        //Move file to storage
+        $filename = md5(str_random(5)).'.'.$file->getClientOriginalExtension();
+        if ($file->move(storage_path('app'.DIRECTORY_SEPARATOR.$month), $filename)) {
+            $content = 'uploads/'.$month.'/'.$filename;
+        }
+
+        return $content;
+    }
+
+    private function setButtons()
+    {
+        $this->button_delete = true;
+        $this->button_show = false;
+        $this->button_cancel = false;
+        $this->button_import = false;
+        $this->button_export = false;
+    }
 }
