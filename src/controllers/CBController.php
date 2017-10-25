@@ -1623,7 +1623,7 @@ class CBController extends Controller {
 
 				if ($vd->fails())
 				{
-
+					Log::error('Validation failed');
 				}
 				else
 				{

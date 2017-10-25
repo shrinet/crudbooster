@@ -58,7 +58,7 @@
                           
                         },2500);
 
-                        $.post("{{ CRUDBooster::mainpath('do-import-chunk').'?file='.Request::get('file') }}",function(resp) {
+                        /*$.post("{{ CRUDBooster::mainpath('do-import-chunk').'?file='.Request::get('file') }}",function(resp) {
                             if(resp.status==true) {
                               $('#progress-import').css('width','100%');
                               $('#progress-import').attr('aria-valuenow',100);
@@ -67,7 +67,7 @@
                               $('#upload-footer').show();
                               console.log('Import Success');
                             }
-                        })
+                        })*/
 
                       })
 
