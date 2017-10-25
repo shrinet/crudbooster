@@ -994,7 +994,11 @@ class CBController extends Controller {
 			}
 		}
 
-		Log::error('validation',$array_input);
+		foreach($array_input as $value) {
+			Log::error('validation',$value);
+		}
+
+		
 		$validator = Validator::make($arr,$array_input);
 
 		return $validator;
@@ -1523,8 +1527,6 @@ class CBController extends Controller {
 	public function postDoImportChunk() {
 		$this->cbLoader();
 		$file_md5 = md5(Request::get('file'));
-		Log::error('md5'.$file_md5);
-		Log::error('total'.$total);
 
 		if (!Cache::has('success_'.$file_md5))
 		{
