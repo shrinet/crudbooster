@@ -1522,6 +1522,7 @@ class CBController extends Controller {
 	public function postDoImportChunk() {
 		$this->cbLoader();
 		$file_md5 = md5(Request::get('file'));
+		Log::error('md5'.$file_md5);
 
 		if(Request::get('file') && Request::get('resume')==1) {
 			$total = Session::get('total_data_import');
@@ -1630,9 +1631,10 @@ class CBController extends Controller {
 				else
 				{
 					DB::table($this->table)->insert($a);
+					Cache::increment('success_'.$file_md5);
 				}
 				
-				Cache::increment('success_'.$file_md5);
+				
 			}catch(\Exception $e) {
 				$e = (string) $e;
 				
