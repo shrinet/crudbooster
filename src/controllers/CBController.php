@@ -1527,7 +1527,7 @@ class CBController extends Controller {
 
 		if (!Cache::has('success_'.$file_md5))
 		{
-		    Cache::put('success_'.$file_md5,0,60)
+		    Cache::put('success_'.$file_md5,0,60);
 		}
 
 		if(Request::get('file') && Request::get('resume')==1) {
