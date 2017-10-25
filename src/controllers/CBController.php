@@ -1506,6 +1506,7 @@ class CBController extends Controller {
 				Cache::increment('success_'.$file_md5);
 			}catch(\Exception $e) {
 				$e = (string) $e;
+				Log::error('Error msg: '.$e);
 				Cache::put('error_'.$file_md5,$e,500);
 			}
 		}
