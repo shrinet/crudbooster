@@ -886,6 +886,7 @@ class CBController extends Controller {
 	public function validationArray($arr) {
 
 		//$request_all = Request::all();
+		$this->data_inputan = $this->form;
 		$array_input = array();
 		foreach($this->data_inputan as $di) {
 			$ai = array();
